@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Step 1 · Adversarial Attacks — Lecture Intro · CISE Workshop</title>
+<style>
+  :root {
+    --bg: #f8f9fc;
+    --surface: #eef1f8;
+    --card: #ffffff;
+    --accent: #3a5bd9;
+    --accent2: #d93a6c;
+    --accent3: #1a9e6e;
+    --text: #1a1f36;
+    --muted: #4a5568;
+    --border: #d1d9ef;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.7; }
+  .page { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
+
+  header { text-align: center; padding: 40px 0 32px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+  header .step { display: inline-block; background: var(--accent); color: #fff; border-radius: 20px; padding: 3px 16px; font-size: 0.8rem; font-weight: 600; margin-bottom: 12px; }
+  header h1 { font-size: 1.9rem; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+  header .sub { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
+  header .credit { margin-top: 10px; font-size: 0.82rem; color: var(--border); }
+
+  .nav { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 40px; }
+  .nav a { background: var(--card); border: 1px solid var(--border); color: var(--muted); text-decoration: none; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; transition: all 0.2s; }
+  .nav a:hover { border-color: var(--accent); color: var(--accent); }
+
+  section { margin-bottom: 52px; }
+  h2 { font-size: 1.2rem; font-weight: 700; color: var(--accent); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  h2 .num { background: var(--accent); color: #fff; border-radius: 50%; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; }
+  h3 { font-size: 1rem; font-weight: 600; color: var(--accent3); margin: 16px 0 8px; }
+  p { color: var(--muted); margin-bottom: 10px; }
+  strong { color: var(--text); }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; }
+  .demo { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 16px; }
+  .demo-title { font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .demo-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 16px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media(max-width:600px){ .two-col, .three-col { grid-template-columns: 1fr; } }
+
+  .tag { display: inline-block; background: #e4eaf8; border: 1px solid var(--accent); color: var(--accent); border-radius: 6px; padding: 2px 10px; font-size: 0.8rem; margin-right: 6px; }
+  .tag.pink { background: #fce4ec; border-color: var(--accent2); color: var(--accent2); }
+  .tag.green { background: #d4f0e8; border-color: var(--accent3); color: var(--accent3); }
+
+  canvas { border-radius: 8px; border: 1px solid var(--border); display: block; }
+  .ctrl-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 12px 0; }
+  .btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+  .btn:hover, .btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.pink:hover, .btn.pink.active { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+  .btn.green:hover, .btn.green.active { background: var(--accent3); border-color: var(--accent3); color: #fff; }
+  .info-box { background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 14px; margin-top: 12px; font-size: 0.88rem; color: var(--muted); }
+  .info-box strong { color: var(--text); }
+
+  .stat-row { display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0; }
+  .stat { background: var(--surface); border-radius: 8px; padding: 10px 16px; text-align: center; border: 1px solid var(--border); }
+  .stat .val { font-size: 1.1rem; font-weight: 700; color: var(--accent); font-family: monospace; }
+  .stat .lbl { font-size: 0.75rem; color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.88rem; }
+  th { background: #e4eaf8; color: var(--accent); font-weight: 600; padding: 9px 14px; text-align: left; }
+  td { padding: 8px 14px; border-top: 1px solid var(--border); color: var(--muted); }
+
+  .next-step { background: linear-gradient(135deg, #e4eaf8, #d4f0e8); border: 1px solid var(--accent); border-radius: 12px; padding: 24px; text-align: center; margin-top: 40px; }
+  .next-step a { display: inline-block; background: var(--accent); color: #fff; text-decoration: none; padding: 10px 28px; border-radius: 8px; font-weight: 600; margin-top: 10px; transition: opacity 0.2s; }
+  .next-step a:hover { opacity: 0.88; }
+
+  .footer { text-align: center; color: var(--border); font-size: 0.8rem; margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px; }
+  .canvas-hint { font-size: 0.78rem; color: var(--muted); text-align: center; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <span class="step">STEP 1 of 2 · Lecture Intro</span>
+  <h1>Adversarial Attacks — Key Concepts</h1>
+  <p class="sub">An introduction before reading the QE-DBA paper</p>
+  <p class="credit">From Dr. Yu's lecture · CISE Workshop · Summarized by Thitima · Beautified &amp; interactive elements by Claude</p>
+</header>
+
+<nav class="nav">
+  <a href="#attacks">1. Adversarial Attacks</a>
+  <a href="#threat">2. Threat Models</a>
+  <a href="#loss">3. Loss &amp; Gradient Descent</a>
+  <a href="#blackbox">4. Why Black-Box Is Hard</a>
+  <a href="#gp">5. Gaussian Process ✦</a>
+  <a href="#bo">6. Bayesian Optimization ✦</a>
+  <a href="#glossary">Glossary</a>
+</nav>
+
+<!-- ══════════ 1. ADVERSARIAL ATTACKS ══════════ -->
+<section id="attacks">
+  <h2><span class="num">1</span> Adversarial Attacks: Making Models Misled</h2>
+  <div class="info-box" style="margin:0 0 14px;border-left-color:var(--accent3)"><strong>In one sentence:</strong> An adversarial attack adds a small, carefully chosen change to an input so the model gives the wrong answer.</div>
+  <div class="card">
+    <p><strong>Red teaming</strong> means deliberately attacking models to find their weaknesses — the same way security teams attack their own systems. Understanding attacks is how we learn to build more robust models.</p>
+    <p>A <strong>poisoning attack</strong> spoofs the model: it perturbs the input so the model is misled. A real-world example from the lecture: an adversarial attack could make a model read a <strong>stop sign</strong> as a <strong>speed limit sign</strong> — a small change to the input, dangerous consequences.</p>
+    <p>The change is small enough that a human still sees a stop sign. The model, however, is confidently wrong.</p>
+  </div>
+</section>
+
+<!-- ══════════ 2. THREAT MODELS ══════════ -->
+<section id="threat">
+  <h2><span class="num">2</span> Threat Models: What Does the Attacker Know?</h2>
+  <div class="info-box" style="margin:0 0 14px;border-left-color:var(--accent3)"><strong>In one sentence:</strong> Attacks are categorized by how much access the attacker has — from full model access down to label-only.</div>
+  <div class="three-col">
+    <div class="card">
+      <span class="tag">White-Box</span>
+      <h3>Full Access</h3>
+      <p>The attacker sees the model's weights, gradients, and confidence scores. Easiest to attack — just follow the gradient.</p>
+    </div>
+    <div class="card">
+      <span class="tag green">Score-Based (Grey Box)</span>
+      <h3>Scores Only</h3>
+      <p>The attacker sees confidence scores ("cat: 0.92, dog: 0.08") but not the model's internals. The scores still leak useful hints.</p>
+    </div>
+    <div class="card">
+      <span class="tag pink">Decision-Based (DBA)</span>
+      <h3>Label Only</h3>
+      <p>The attacker only gets "cat" or "dog" back. No scores, no gradients. The most realistic — and hardest — setting, e.g. a cloud API.</p>
+    </div>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">Decision-based attacks: poison the input by observing the output</h3>
+    <p>In a DBA, the attacker repeatedly queries the model and watches only the labels that come back. The key question: <strong>can we craft a poisoned input using nothing but those labels?</strong></p>
+    <p>The attacker also wants to <strong>minimize the budget</strong> — use as few queries and resources as possible. Fewer queries means cheaper, faster, and <strong>harder to detect</strong>: real APIs limit query rates to thwart suspicious behavior.</p>
+  </div>
+</section>
+
+<!-- ══════════ 3. LOSS & GRADIENT DESCENT ══════════ -->
+<section id="loss">
+  <h2><span class="num">3</span> Loss Functions &amp; Gradient Descent</h2>
+  <div class="info-box" style="margin:0 0 14px;border-left-color:var(--accent3)"><strong>In one sentence:</strong> Models learn by finding the lowest point of a "wrongness score" — by always stepping downhill.</div>
+
+  <div class="card" style="margin-bottom:14px;border-left:3px solid var(--accent2)">
+    <h3 style="margin-top:0;color:var(--accent2)">First, the basics: what is a loss function?</h3>
+    <p>A <strong>loss function</strong> (also called a <strong>cost function</strong>) is just a score for how wrong the model is. Show the model a cat photo: if it says "cat" with high confidence, the loss is small; if it says "dog", the loss is large. One number = how bad the model's answer was.</p>
+    <p><strong>Why find the lowest point?</strong> Training a model means adjusting its weights to make this wrongness score as small as possible. The lowest point of the loss function is where the model makes the fewest mistakes — so "learning" is literally a search for the bottom of the curve. As Dr. Yu said: to train a model, you need to know how to define its cost function.</p>
+    <p><strong>In attacks, the same idea is flipped:</strong> the attacker defines their own loss — for example, "how far is this image from being misclassified?" — and searches for its lowest point, where the model gets fooled.</p>
+  </div>
+
+  <div class="card">
+    <p>Imagine hiking down a hill in thick fog. You can't see the valley, but you can feel which way the ground slopes — so you keep stepping downhill. The <strong>gradient</strong> is that slope: it points uphill, so you step the <em>opposite</em> way. The step size is the <strong>learning rate</strong>. Repeat until you reach a minimum. This is <strong>gradient descent</strong> — how neural networks learn, and how white-box attacks work.</p>
+  </div>
+</section>
+
+<!-- ══════════ 4. WHY BLACK-BOX IS HARD ══════════ -->
+<section id="blackbox">
+  <h2><span class="num">4</span> Why Black-Box Attacks Are Hard</h2>
+  <div class="info-box" style="margin:0 0 14px;border-left-color:var(--accent3)"><strong>In one sentence:</strong> Without gradients, you must estimate them by querying — and that costs tens of thousands of queries.</div>
+  <div class="card">
+    <h3 style="margin-top:0">Zeroth-order gradient descent</h3>
+    <p>Gradient descent needs the <em>actual gradient</em> at each step. In a black-box setting, we cannot calculate it — we have to estimate it by sampling many nearby points and observing which way the output changes. This estimate-by-querying approach is called <strong>zeroth-order optimization</strong>. Each sample costs a query — which is why these attacks need 20,000+ queries.</p>
+    <h3>The way out: gradient-free optimization</h3>
+    <p>What if we skip gradients entirely? <strong>Gradient-free optimization</strong> treats the attack as a pure search problem. The smartest version of this is <strong>Bayesian Optimization</strong>, built on a tool called the <strong>Gaussian Process</strong> — the next two sections introduce both.</p>
+  </div>
+</section>
+
+<!-- ══════════ 5. GAUSSIAN PROCESS ══════════ -->
+<section id="gp">
+  <h2><span class="num">5</span> Gaussian Process (GP)</h2>
+  <div class="info-box" style="margin:0 0 14px;border-left-color:var(--accent3)"><strong>In one sentence:</strong> A GP draws a best-guess curve through the points you've observed — and honestly marks how unsure it is everywhere else.</div>
+  <p>A Gaussian Process is a way to model an <em>unknown function</em> from only a few observations. Think of sketching a smooth curve through a handful of known dots: between the dots you're guessing, and a GP keeps track of exactly <strong>how uncertain</strong> each guess is.</p>
+  <div class="card" style="margin-bottom:14px">
+    <p>The shaded region below represents <strong>uncertainty</strong>. Wide band = uncertain. Narrow band = confident. More observations → less uncertainty.</p>
+  </div>
+
+  <div class="demo">
+    <div class="demo-title">Interactive: Build a Gaussian Process</div>
+    <div class="demo-sub">Click anywhere on the chart to "query" that point. Watch the GP learn the shape of the hidden function and reduce its uncertainty.</div>
+    <canvas id="gp-canvas" width="860" height="220" style="width:100%;cursor:crosshair"></canvas>
+    <p class="canvas-hint">Click on the chart to add observations · Blue band = uncertainty · Blue line = GP prediction</p>
+    <div class="ctrl-row">
+      <button class="btn green" onclick="gpReveal()" id="gp-reveal-btn">👁 Reveal true function</button>
+      <button class="btn" onclick="gpReset()">↺ Clear all observations</button>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="val" id="gp-n">0</div><div class="lbl">observations</div></div>
+      <div class="stat"><div class="val" id="gp-avg-std">—</div><div class="lbl">avg uncertainty</div></div>
+    </div>
+    <div class="info-box" id="gp-msg"><strong>Try it:</strong> Add a few observations by clicking. Notice how the uncertainty (blue band) shrinks near observed points but stays wide in unobserved regions.</div>
+  </div>
+</section>
+
+<!-- ══════════ 6. BAYESIAN OPTIMIZATION ══════════ -->
+<section id="bo">
+  <h2><span class="num">6</span> Bayesian Optimization (BO)</h2>
+  <div class="info-box" style="margin:0 0 14px;border-left-color:var(--accent3)"><strong>In one sentence:</strong> Use the GP's predictions and uncertainty to pick the single most useful point to query next.</div>
+  <p>Bayesian Optimization uses a Gaussian Process to decide <em>where to query next</em>. Instead of querying randomly or estimating gradients, it asks: <strong>"Where is the next query most likely to pay off?"</strong></p>
+  <div class="card" style="margin-bottom:14px">
+    <p>It's like choosing a restaurant: do you go back to your known favorite, or try a new place that <em>might</em> be even better? BO uses a simple scoring rule (called the <em>acquisition function</em>) to balance this trade-off:</p>
+    <p>• <strong>Exploitation</strong> — query near the current best known point.<br>
+       • <strong>Exploration</strong> — query in uncertain regions where there might be something better.</p>
+    <p>This balance is what makes BO so query-efficient: no query is wasted on regions that are neither promising nor informative.</p>
+  </div>
+
+  <div class="demo">
+    <div class="demo-title">Interactive: Smart vs Random Querying</div>
+    <div class="demo-sub">Goal: find the lowest point of a hidden function in as few queries as possible. Green dots = smart (BO) queries, pink dots = random queries.</div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px">
+      <button class="btn green active" onclick="boQuerySmart()" id="bo-smart-btn">✦ Smart query</button>
+      <button class="btn pink" onclick="boQueryRandom()" id="bo-rand-btn">? Random query</button>
+      <button class="btn" onclick="boReset()">↺ Reset</button>
+      <button class="btn green" onclick="boReveal()" id="bo-reveal-btn">👁 Reveal true function</button>
+    </div>
+
+    <canvas id="bo-gp-canvas" width="860" height="180" style="width:100%;margin-bottom:6px"></canvas>
+    <div style="font-size:0.78rem;color:var(--muted);text-align:center;margin-bottom:6px">Blue line = best guess · blue band = uncertainty</div>
+
+    <div class="stat-row" style="margin-top:12px">
+      <div class="stat"><div class="val" id="bo-n-smart" style="color:var(--accent3)">0</div><div class="lbl">smart queries</div></div>
+      <div class="stat"><div class="val" id="bo-n-rand" style="color:var(--accent2)">0</div><div class="lbl">random queries</div></div>
+      <div class="stat"><div class="val" id="bo-best">—</div><div class="lbl">lowest point found</div></div>
+    </div>
+    <div class="info-box" id="bo-msg"><strong>Try it:</strong> Click "Smart query" a few times, then reset and try "Random query". Which one finds the low point faster?</div>
+  </div>
+</section>
+
+<!-- ══════════ GLOSSARY ══════════ -->
+<section id="glossary">
+  <h2><span class="num">＋</span> Other Terms From the Lecture</h2>
+  <div class="card">
+    <table>
+      <thead><tr><th>Term</th><th>One-line meaning</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Backpropagation</strong></td><td>The algorithm that computes gradients for every weight in a network, so gradient descent can update them</td></tr>
+        <tr><td><strong>Skip mechanism (skip connections)</strong></td><td>Shortcuts that let information bypass layers — the trick that makes very deep networks like ResNet trainable</td></tr>
+        <tr><td><strong>Self-attention / Transformer</strong></td><td>An architecture where each part of the input learns to focus on the most relevant other parts — the foundation of LLMs</td></tr>
+        <tr><td><strong>Cross-entropy</strong></td><td>The standard loss function for classification (and for training LLMs) — it penalizes confident wrong answers heavily</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.85rem;margin-top:8px">These came up in the lecture as general deep-learning background — they're not needed to understand QE-DBA, but they're good terms to know.</p>
+  </div>
+</section>
+
+<div class="next-step">
+  <div style="font-weight:700;color:var(--text);font-size:1.05rem">What's next?</div>
+  <p style="margin-top:6px">Now that you know the concepts, the next step is seeing how the QE-DBA paper combines them into an attack that needs fewer than 200 queries.</p>
+</div>
+
+<div class="footer">CISE Workshop · Step 1 of 2 · Lecture Intro</div>
+
+</div><!-- /page -->
+
+<script>
+// ══════════════════════════════════
+//  Shared utilities
+// ══════════════════════════════════
+function matVecMul(M, v) {
+  return M.map(row => row.reduce((s, val, j) => s + val * v[j], 0));
+}
+
+function matInv(A) {
+  const n = A.length;
+  const aug = A.map((row, i) => [...row, ...Array.from({length: n}, (_, j) => j === i ? 1 : 0)]);
+  for (let col = 0; col < n; col++) {
+    let maxRow = col;
+    for (let r = col + 1; r < n; r++)
+      if (Math.abs(aug[r][col]) > Math.abs(aug[maxRow][col])) maxRow = r;
+    [aug[col], aug[maxRow]] = [aug[maxRow], aug[col]];
+    const piv = aug[col][col];
+    if (Math.abs(piv) < 1e-10) continue;
+    for (let j = 0; j < 2 * n; j++) aug[col][j] /= piv;
+    for (let r = 0; r < n; r++) {
+      if (r === col) continue;
+      const f = aug[r][col];
+      for (let j = 0; j < 2 * n; j++) aug[r][j] -= f * aug[col][j];
+    }
+  }
+  return aug.map(row => row.slice(n));
+}
+
+function rbfKernel(x1, x2, l = 0.18) {
+  return Math.exp(-0.5 * (x1 - x2) ** 2 / (l * l));
+}
+
+function gpPredict(Xobs, yobs, Xtest, noise = 0.005) {
+  if (Xobs.length === 0) {
+    return Xtest.map(() => ({ mean: 0, std: 1.0 }));
+  }
+  const K = Xobs.map((xi, i) => Xobs.map((xj, j) =>
+    rbfKernel(xi, xj) + (i === j ? noise : 0)
+  ));
+  const Kinv = matInv(K);
+  const alpha = matVecMul(Kinv, yobs);
+  return Xtest.map(xt => {
+    const ks = Xobs.map(xi => rbfKernel(xt, xi));
+    const mean = ks.reduce((s, k, i) => s + k * alpha[i], 0);
+    const KinvKs = matVecMul(Kinv, ks);
+    const var_i = rbfKernel(xt, xt) - ks.reduce((s, k, i) => s + k * KinvKs[i], 0);
+    return { mean, std: Math.sqrt(Math.max(0, var_i)) };
+  });
+}
+
+// Normal CDF approximation (Abramowitz & Stegun)
+function normalCDF(x) {
+  const a = 0.2316419, b1 = 0.319381530, b2 = -0.356563782,
+        b3 = 1.781477937, b4 = -1.821255978, b5 = 1.330274429;
+  const t = 1 / (1 + a * Math.abs(x));
+  const poly = t * (b1 + t * (b2 + t * (b3 + t * (b4 + t * b5))));
+  const phi = Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+  const cdf = 1 - phi * poly;
+  return x >= 0 ? cdf : 1 - cdf;
+}
+function normalPDF(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+// Acquisition: Expected Improvement (for minimization)
+function expectedImprovement(mu, sigma, fBest, xi = 0.01) {
+  if (sigma < 1e-8) return 0;
+  const Z = (fBest - mu - xi) / sigma;
+  return (fBest - mu - xi) * normalCDF(Z) + sigma * normalPDF(Z);
+}
+
+// ══════════════════════════════════
+//  GP + BO shared
+// ══════════════════════════════════
+const N_TEST = 200;
+const Xtest = Array.from({length: N_TEST}, (_, i) => i / (N_TEST - 1));
+
+function trueFn(x) {
+  return 0.5 * Math.sin(6 * Math.PI * x) + 0.3 * Math.cos(3 * Math.PI * x) - 0.4 * x + 0.2;
+}
+
+// ── GP standalone ──
+let gpXobs = [], gpYobs = [], gpRevealed = false;
+
+function gpDraw() {
+  const canvas = document.getElementById('gp-canvas');
+  canvas.width = canvas.offsetWidth || 860;
+  const W = canvas.width, H = 220;
+  const ctx = canvas.getContext('2d');
+
+  const YMIN = -1.8, YMAX = 1.8;
+  function toC(x, y) {
+    return [x * W, H - (y - YMIN) / (YMAX - YMIN) * H];
+  }
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#f8f9fc'; ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#d1d9ef'; ctx.lineWidth = 1;
+  for (let y = -1.5; y <= 1.5; y += 0.5) {
+    const [, cy] = toC(0, y);
+    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+  }
+  // Zero line
+  ctx.strokeStyle = '#b0bcd4'; ctx.lineWidth = 1.5;
+  const [, cy0] = toC(0, 0);
+  ctx.beginPath(); ctx.moveTo(0, cy0); ctx.lineTo(W, cy0); ctx.stroke();
+
+  const preds = gpPredict(gpXobs, gpYobs, Xtest);
+
+  // Uncertainty band
+  ctx.fillStyle = 'rgba(58,91,217,0.12)';
+  ctx.beginPath();
+  preds.forEach((p, i) => {
+    const [cx, cy] = toC(Xtest[i], p.mean + 2 * p.std);
+    i === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
+  });
+  for (let i = preds.length - 1; i >= 0; i--) {
+    const [cx, cy] = toC(Xtest[i], preds[i].mean - 2 * preds[i].std);
+    ctx.lineTo(cx, cy);
+  }
+  ctx.closePath(); ctx.fill();
+
+  // GP mean
+  ctx.strokeStyle = '#3a5bd9'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  preds.forEach((p, i) => {
+    const [cx, cy] = toC(Xtest[i], p.mean);
+    i === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
+  });
+  ctx.stroke();
+
+  // True function (if revealed)
+  if (gpRevealed) {
+    ctx.strokeStyle = '#1a9e6e'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    Xtest.forEach((x, i) => {
+      const [cx, cy] = toC(x, trueFn(x));
+      i === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
+    });
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#1a9e6e'; ctx.font = '12px sans-serif';
+    ctx.fillText('— true function', W - 140, 18);
+  }
+
+  // Observations
+  gpXobs.forEach((x, i) => {
+    const [cx, cy] = toC(x, gpYobs[i]);
+    ctx.shadowColor = 'rgba(58,91,217,0.4)'; ctx.shadowBlur = 6;
+    ctx.fillStyle = '#3a5bd9';
+    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+
+  // Stats
+  const avgStd = preds.reduce((s, p) => s + p.std, 0) / preds.length;
+  document.getElementById('gp-n').textContent = gpXobs.length;
+  document.getElementById('gp-avg-std').textContent = avgStd.toFixed(3);
+
+  const msg = gpXobs.length === 0 ? '<strong>Try it:</strong> Click anywhere on the chart to add an observation.' :
+              gpXobs.length < 4   ? 'Good — add a few more observations to see the GP take shape.' :
+              avgStd < 0.25       ? '🎉 High confidence! The GP has a good model of the function.' :
+                                    'The GP is learning — keep adding observations to reduce uncertainty.';
+  document.getElementById('gp-msg').innerHTML = msg;
+}
+
+document.getElementById('gp-canvas').addEventListener('click', (e) => {
+  if (gpXobs.length >= 12) return;
+  const canvas = e.currentTarget;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = trueFn(x) + (Math.random() - 0.5) * 0.05; // slight noise
+  gpXobs.push(x); gpYobs.push(y);
+  gpDraw();
+});
+
+function gpReveal() { gpRevealed = !gpRevealed; document.getElementById('gp-reveal-btn').textContent = gpRevealed ? '🙈 Hide true function' : '👁 Reveal true function'; gpDraw(); }
+function gpReset() { gpXobs = []; gpYobs = []; gpRevealed = false; document.getElementById('gp-reveal-btn').textContent = '👁 Reveal true function'; gpDraw(); }
+
+// ── Bayesian Optimization ──
+let boXobs = [], boYobs = [], boRevealed = false, boNSmart = 0, boNRand = 0;
+let boSmartFlags = []; // true = smart, false = random
+
+const BO_TRUE_MIN = (() => {
+  let best = {x: 0, y: Infinity};
+  Xtest.forEach(x => { const y = trueFn(x); if (y < best.y) best = {x, y}; });
+  return best;
+})();
+
+function boDrawGP() {
+  const canvas = document.getElementById('bo-gp-canvas');
+  canvas.width = canvas.offsetWidth || 860;
+  const W = canvas.width, H = 180;
+  const ctx = canvas.getContext('2d');
+  const YMIN = -1.8, YMAX = 1.8;
+  function toC(x, y) { return [x * W, H - (y - YMIN) / (YMAX - YMIN) * H]; }
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#f8f9fc'; ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#d1d9ef'; ctx.lineWidth = 1;
+  [-1, 0, 1].forEach(y => {
+    const [, cy] = toC(0, y);
+    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+  });
+
+  const preds = gpPredict(boXobs, boYobs, Xtest);
+
+  // Uncertainty band
+  ctx.fillStyle = 'rgba(58,91,217,0.1)';
+  ctx.beginPath();
+  preds.forEach((p, i) => { const [cx, cy] = toC(Xtest[i], p.mean + 2 * p.std); i === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy); });
+  for (let i = preds.length - 1; i >= 0; i--) { const [cx, cy] = toC(Xtest[i], preds[i].mean - 2 * preds[i].std); ctx.lineTo(cx, cy); }
+  ctx.closePath(); ctx.fill();
+
+  // GP mean
+  ctx.strokeStyle = '#3a5bd9'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  preds.forEach((p, i) => { const [cx, cy] = toC(Xtest[i], p.mean); i === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy); });
+  ctx.stroke();
+
+  // True function (if revealed)
+  if (boRevealed) {
+    ctx.strokeStyle = '#1a9e6e'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    Xtest.forEach((x, i) => { const [cx, cy] = toC(x, trueFn(x)); i === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy); });
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // Observations — color by type
+  boXobs.forEach((x, i) => {
+    const [cx, cy] = toC(x, boYobs[i]);
+    ctx.fillStyle = boSmartFlags[i] ? '#1a9e6e' : '#d93a6c';
+    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+  });
+
+  // True min marker
+  if (boRevealed) {
+    const [cx, cy] = toC(BO_TRUE_MIN.x, BO_TRUE_MIN.y);
+    ctx.strokeStyle = '#1a9e6e'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx - 8, cy - 8); ctx.lineTo(cx + 8, cy + 8); ctx.moveTo(cx + 8, cy - 8); ctx.lineTo(cx - 8, cy + 8); ctx.stroke();
+  }
+
+  if (boYobs.length > 0) {
+    const bestY = Math.min(...boYobs);
+    document.getElementById('bo-best').textContent = bestY.toFixed(3);
+  }
+
+  return preds;
+}
+
+// Pick the next smart query: maximize Expected Improvement (computed internally, not drawn)
+function boPickSmart(preds) {
+  const fBest = boYobs.length > 0 ? Math.min(...boYobs) : 0;
+  const eis = preds.map(p => expectedImprovement(p.mean, p.std, fBest));
+  let bestIdx = 0;
+  eis.forEach((ei, i) => { if (ei > eis[bestIdx]) bestIdx = i; });
+  return bestIdx;
+}
+
+function boQuerySmart() {
+  if (boXobs.length >= 15) return;
+  const preds = gpPredict(boXobs, boYobs, Xtest);
+  const bestIdx = boPickSmart(preds);
+  const x = Xtest[bestIdx];
+  const y = trueFn(x) + (Math.random() - 0.5) * 0.05;
+  boXobs.push(x); boYobs.push(y); boSmartFlags.push(true);
+  boNSmart++;
+  document.getElementById('bo-n-smart').textContent = boNSmart;
+  boDrawGP();
+  updateBoMsg();
+}
+
+function boQueryRandom() {
+  if (boXobs.length >= 15) return;
+  const x = Math.random();
+  const y = trueFn(x) + (Math.random() - 0.5) * 0.05;
+  boXobs.push(x); boYobs.push(y); boSmartFlags.push(false);
+  boNRand++;
+  document.getElementById('bo-n-rand').textContent = boNRand;
+  boDrawGP();
+  updateBoMsg();
+}
+
+function updateBoMsg() {
+  const bestY = boYobs.length > 0 ? Math.min(...boYobs) : null;
+  const dist = bestY !== null ? Math.abs(bestY - BO_TRUE_MIN.y) : null;
+  let msg;
+  if (boXobs.length === 0) msg = '<strong>Try it:</strong> Click "Smart query" a few times, then reset and try "Random query". Which one finds the low point faster?';
+  else if (dist < 0.1) msg = '🎉 Very close to the true minimum! Notice how few queries it took.';
+  else if (boNSmart > 0 && boNRand > 0) msg = `${boXobs.length} total queries (${boNSmart} smart, ${boNRand} random). Best found: ${bestY.toFixed(3)} — true minimum is ${BO_TRUE_MIN.y.toFixed(3)}. Which queries got you closer?`;
+  else msg = `${boXobs.length} queries used. True minimum is at y=${BO_TRUE_MIN.y.toFixed(3)}. Best found so far: ${bestY?.toFixed(3) ?? '—'}`;
+  document.getElementById('bo-msg').innerHTML = msg;
+}
+
+function boReset() {
+  boXobs = []; boYobs = []; boSmartFlags = [];
+  boNSmart = 0; boNRand = 0; boRevealed = false;
+  document.getElementById('bo-n-smart').textContent = 0;
+  document.getElementById('bo-n-rand').textContent = 0;
+  document.getElementById('bo-best').textContent = '—';
+  document.getElementById('bo-reveal-btn').textContent = '👁 Reveal true function';
+  boDrawGP();
+  updateBoMsg();
+}
+
+function boReveal() {
+  boRevealed = !boRevealed;
+  document.getElementById('bo-reveal-btn').textContent = boRevealed ? '🙈 Hide' : '👁 Reveal true function';
+  boDrawGP();
+}
+
+// ══════════════════════════════════
+//  Init
+// ══════════════════════════════════
+window.onload = function() {
+  gpDraw();
+  boDrawGP();
+};
+
+window.addEventListener('resize', () => {
+  gpDraw(); boDrawGP();
+});
+</script>
+</body>
+</html>
