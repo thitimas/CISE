@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML & CNN Workshop — CISE</title>
+<style>
+  :root {
+    --bg: #f8f9fc;
+    --surface: #eef1f8;
+    --card: #ffffff;
+    --accent: #3a5bd9;
+    --accent2: #d93a6c;
+    --accent3: #1a9e6e;
+    --text: #1a1f36;
+    --muted: #4a5568;
+    --border: #d1d9ef;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.7; }
+
+  .page { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
+
+  header { text-align: center; padding: 40px 0 32px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+  header h1 { font-size: 2rem; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+  header p { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
+
+  .nav { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 40px; }
+  .nav a { background: var(--card); border: 1px solid var(--border); color: var(--muted); text-decoration: none; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; transition: all 0.2s; }
+  .nav a:hover { border-color: var(--accent); color: var(--accent); }
+
+  section { margin-bottom: 48px; }
+  h2 { font-size: 1.25rem; font-weight: 700; color: var(--accent); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  h2 .num { background: var(--accent); color: #fff; border-radius: 50%; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; }
+  h3 { font-size: 1rem; font-weight: 600; color: var(--accent3); margin: 18px 0 8px; }
+  p { color: var(--muted); margin-bottom: 10px; }
+  strong { color: var(--text); }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width:600px){ .two-col { grid-template-columns: 1fr; } }
+
+  .tag { display: inline-block; background: #e4eaf8; border: 1px solid var(--accent); color: var(--accent); border-radius: 6px; padding: 2px 10px; font-size: 0.8rem; margin-right: 6px; }
+  .tag.green { background: #d4f0e8; border-color: var(--accent3); color: var(--accent3); }
+  .tag.pink { background: #fce4ec; border-color: var(--accent2); color: var(--accent2); }
+
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  th { background: #e4eaf8; color: var(--accent); font-weight: 600; padding: 10px 14px; text-align: left; font-size: 0.85rem; }
+  td { padding: 9px 14px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
+  td code { background: #eef4f0; border-radius: 4px; padding: 1px 6px; color: var(--accent3); font-family: monospace; font-size: 0.85rem; }
+  tr:hover td { background: rgba(108,142,245,0.04); }
+
+  /* ─── Interactive CNN Filter ─── */
+  .cnn-demo { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .cnn-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center; }
+  .cnn-controls label { color: var(--muted); font-size: 0.85rem; }
+  .filter-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+  .filter-btn:hover, .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .canvas-row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; justify-content: center; }
+  .canvas-wrap { text-align: center; }
+  .canvas-wrap span { display: block; color: var(--muted); font-size: 0.8rem; margin-top: 6px; }
+  canvas { border-radius: 8px; border: 1px solid var(--border); display: block; image-rendering: pixelated; }
+  .kernel-grid { display: grid; grid-template-columns: repeat(3, 44px); gap: 4px; margin: 10px auto; width: fit-content; }
+  .kernel-cell { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-family: monospace; color: var(--accent3); font-weight: 600; }
+  .kernel-cell.pos { color: #1a9e6e; }
+  .kernel-cell.neg { color: var(--accent2); }
+  .kernel-cell.zero { color: var(--muted); }
+  .explain-box { background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 12px 16px; margin-top: 16px; font-size: 0.88rem; color: var(--muted); }
+  .explain-box strong { color: var(--text); }
+
+  /* ─── Perceptron diagram ─── */
+  .perceptron-svg { width: 100%; max-width: 520px; display: block; margin: 0 auto; }
+
+  /* ─── Poison demo ─── */
+  .poison-row { display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
+  .poison-canvas-wrap { text-align: center; }
+  .poison-canvas-wrap span { font-size: 0.8rem; color: var(--muted); display: block; margin-top: 6px; }
+  #noise-slider { width: 200px; accent-color: var(--accent2); }
+  .poison-label { font-size: 0.9rem; color: var(--muted); }
+  #pred-label { font-weight: 700; font-size: 1rem; }
+
+  .w-row { display: flex; align-items: center; gap: 8px; }
+  .w-label { font-family: monospace; font-size: 0.9rem; color: var(--text); min-width: 100px; }
+  #weights-demo .filter-btn { font-size: 0.8rem; padding: 5px 12px; }
+
+  .footer { text-align: center; color: var(--border); font-size: 0.8rem; margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <h1>ML &amp; CNN — Workshop Summary</h1>
+  <p>CISE Summer Research · Data Poisoning Attacks Project</p>
+  <p style="margin-top:10px;font-size:0.82rem;color:var(--border)">From Dr. Yu's lecture &nbsp;·&nbsp; CISE Workshop, May 28th &nbsp;·&nbsp; Summarized by Thitima &nbsp;·&nbsp; Beautified &amp; interactive elements by Claude</p>
+</header>
+
+<nav class="nav">
+  <a href="#ml">1. ML Basics</a>
+  <a href="#tensors">2. Tensors</a>
+  <a href="#nn">3. Neural Networks</a>
+  <a href="#cnn">4. CNN &amp; Filters ✦ Interactive</a>
+  <a href="#poison">5. Data Poisoning</a>
+</nav>
+
+<!-- ══════════ 1. ML BASICS ══════════ -->
+<section id="ml">
+  <h2><span class="num">1</span> Machine Learning Basics</h2>
+  <p>We focus on <strong>supervised learning</strong> — the model learns from labeled examples and makes predictions on new data. The two task types you need to know:</p>
+  <div class="two-col">
+    <div class="card">
+      <span class="tag">Regression</span>
+      <h3 style="margin-top:10px">Continuous Output</h3>
+      <p>Predicts a number on a continuous scale.<br>
+      <strong>Example:</strong> Given a house's size and location, predict its price — e.g., $347,200.</p>
+    </div>
+    <div class="card">
+      <span class="tag green">Classification</span>
+      <h3 style="margin-top:10px">Discrete Output</h3>
+      <p>Assigns input to a category, with a confidence score.<br>
+      <strong>Example:</strong> Given an image, predict "cat" with 94% confidence or "dog" with 6%.</p>
+    </div>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">Model-Based Learning</h3>
+    <p>The system builds a model from training examples, then uses that model to make predictions on new, unseen inputs. The key challenge is <strong>hyperparameter tuning</strong> — choosing settings like learning rate and network depth through empirical testing. This is often the most tedious part of the process.</p>
+  </div>
+</section>
+
+<!-- ══════════ 2. TENSORS ══════════ -->
+<section id="tensors">
+  <h2><span class="num">2</span> Tensors &amp; TensorFlow</h2>
+  <p>A <strong>tensor</strong> is a way to store numbers in multiple dimensions — it's the fundamental data structure used in machine learning.</p>
+  <div class="card">
+    <table>
+      <thead><tr><th>Structure</th><th>Example</th><th>Dimensions</th><th>Use in ML</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Scalar</strong></td><td><code>5</code></td><td>0D</td><td>A single value (loss, accuracy)</td></tr>
+        <tr><td><strong>Vector</strong></td><td><code>[1, 2, 3]</code></td><td>1D</td><td>Features of one sample</td></tr>
+        <tr><td><strong>Matrix</strong></td><td><code>[[1,2],[3,4]]</code></td><td>2D</td><td>A batch of samples; a grayscale image</td></tr>
+        <tr><td><strong>Tensor</strong></td><td><code>[[[r,g,b], …]]</code></td><td>3D+</td><td>Color images, video, batches of images</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:10px; font-size:0.88rem"><strong>TensorFlow</strong> is a software library built around the idea of data flowing through a network as multi-dimensional tensors — hence the name.</p>
+  </div>
+</section>
+
+<!-- ══════════ 3. NEURAL NETWORKS ══════════ -->
+<section id="nn">
+  <h2><span class="num">3</span> Artificial Neural Networks</h2>
+  <div class="two-col">
+    <div class="card">
+      <h3 style="margin-top:0">Feedforward Network</h3>
+      <p>Information flows in one direction: <strong>input → hidden layers → output</strong>. There are no loops. Every node in each hidden layer is connected to all nodes in the previous layer. This is the architecture our project uses.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Recurrent Network (not our focus)</h3>
+      <p>Has loops — output can feed back into earlier layers. Useful for sequences (text, speech). We won't use this for the poisoning project.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">The Perceptron (one neuron)</h3>
+    <p>Inspired by the human brain. Each neuron:</p>
+    <p>1. Receives inputs from the previous layer, each multiplied by a <strong>weight</strong>.<br>
+    2. Sums the weighted inputs.<br>
+    3. Applies an <strong>activation function</strong> — if the sum exceeds a threshold, the neuron fires (output = 1); otherwise it doesn't contribute (output ≈ 0).</p>
+    <p>The weights are the <strong>unknowns</strong>. Training finds optimal weight values by repeatedly adjusting them to minimize prediction error.</p>
+
+    <svg class="perceptron-svg" viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+      <!-- inputs -->
+      <circle cx="60" cy="70" r="22" fill="#eef1f8" stroke="#3a5bd9" stroke-width="1.5"/>
+      <text x="60" y="75" text-anchor="middle" fill="#4a5568" font-size="11">x₁</text>
+      <circle cx="60" cy="130" r="22" fill="#eef1f8" stroke="#3a5bd9" stroke-width="1.5"/>
+      <text x="60" y="135" text-anchor="middle" fill="#4a5568" font-size="11">x₂</text>
+      <circle cx="60" cy="190" r="22" fill="#eef1f8" stroke="#3a5bd9" stroke-width="1.5"/>
+      <text x="60" y="195" text-anchor="middle" fill="#4a5568" font-size="11">x₃</text>
+      <!-- weights lines -->
+      <line x1="82" y1="70" x2="218" y2="105" stroke="#6c8ef5" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.6"/>
+      <line x1="82" y1="130" x2="218" y2="115" stroke="#6c8ef5" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.6"/>
+      <line x1="82" y1="190" x2="218" y2="128" stroke="#6c8ef5" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.6"/>
+      <text x="135" y="83" fill="#f56c8e" font-size="10">w₁</text>
+      <text x="140" y="120" fill="#f56c8e" font-size="10">w₂</text>
+      <text x="133" y="163" fill="#f56c8e" font-size="10">w₃</text>
+      <!-- neuron -->
+      <circle cx="260" cy="115" r="42" fill="#f8f9fc" stroke="#1a9e6e" stroke-width="2"/>
+      <text x="260" y="110" text-anchor="middle" fill="#1a9e6e" font-size="10" font-weight="bold">Σ weighted</text>
+      <text x="260" y="124" text-anchor="middle" fill="#1a9e6e" font-size="10">inputs</text>
+      <text x="260" y="138" text-anchor="middle" fill="#4a5568" font-size="9">+ activation</text>
+      <!-- output line -->
+      <line x1="302" y1="115" x2="400" y2="115" stroke="#56d9a0" stroke-width="1.5"/>
+      <polygon points="400,109 414,115 400,121" fill="#56d9a0"/>
+      <circle cx="430" cy="115" r="22" fill="#eef1f8" stroke="#1a9e6e" stroke-width="1.5"/>
+      <text x="430" y="120" text-anchor="middle" fill="#4a5568" font-size="11">out</text>
+      <!-- labels -->
+      <text x="60" y="225" text-anchor="middle" fill="#3a5bd9" font-size="10">Inputs</text>
+      <text x="260" y="175" text-anchor="middle" fill="#1a9e6e" font-size="10">Neuron</text>
+      <text x="430" y="148" text-anchor="middle" fill="#1a9e6e" font-size="10">Output</text>
+      <text x="155" y="55" text-anchor="middle" fill="#d93a6c" font-size="10">Weights (learned by training)</text>
+    </svg>
+  </div>
+</section>
+
+  <!-- WEIGHTS INTERACTIVE -->
+  <div class="cnn-demo" id="weights-demo">
+    <div style="margin-bottom:6px"><strong style="color:var(--text)">Interactive: How Training Finds the Right Weights</strong></div>
+    <p style="font-size:0.87rem;margin-bottom:14px">A neuron gets two inputs. We know the correct answer. Try adjusting the weights manually — or let the neuron train itself and watch the weights converge.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;justify-content:center">
+      <!-- Left: inputs + weight sliders -->
+      <div style="min-width:220px">
+        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Inputs (fixed)</div>
+        <div class="w-row"><span class="w-label">x₁ = <strong>0.8</strong></span><span style="color:var(--muted);font-size:0.8rem">(e.g. fur texture score)</span></div>
+        <div class="w-row" style="margin-top:4px"><span class="w-label">x₂ = <strong>0.3</strong></span><span style="color:var(--muted);font-size:0.8rem">(e.g. ear shape score)</span></div>
+        <div style="font-size:0.82rem;color:var(--muted);margin:14px 0 8px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Weights (you control)</div>
+        <div class="w-row"><label style="width:36px;color:var(--accent)">w₁</label>
+          <input type="range" id="w1" min="-5" max="5" step="any" value="0.2" oninput="updateWeights()" style="flex:1;accent-color:var(--accent)">
+          <span id="w1-val" style="width:44px;text-align:right;font-family:monospace;font-size:0.85rem;color:var(--text)">0.20</span>
+        </div>
+        <div class="w-row" style="margin-top:6px"><label style="width:36px;color:var(--accent)">w₂</label>
+          <input type="range" id="w2" min="-5" max="5" step="any" value="0.1" oninput="updateWeights()" style="flex:1;accent-color:var(--accent)">
+          <span id="w2-val" style="width:44px;text-align:right;font-family:monospace;font-size:0.85rem;color:var(--text)">-0.50</span>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:8px">
+          <button class="filter-btn" onclick="trainStep()" id="train-btn">▶ Train one step</button>
+          <button class="filter-btn" onclick="autoTrain()" id="auto-btn">⏩ Auto-train</button>
+          <button class="filter-btn" onclick="resetWeights()">↺ Reset</button>
+        </div>
+      </div>
+      <!-- Right: neuron output + error -->
+      <div style="min-width:220px">
+        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Neuron Output</div>
+        <div style="background:var(--surface);border-radius:10px;padding:16px;border:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.85rem">
+            <span style="color:var(--muted)">Weighted sum</span>
+            <span id="wsum" style="font-family:monospace;color:var(--text)">0.01</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.85rem">
+            <span style="color:var(--muted)">After activation (sigmoid)</span>
+            <span id="wout" style="font-family:monospace;font-weight:700;color:var(--accent)">0.50</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:0.85rem">
+            <span style="color:var(--muted)">Target (correct answer)</span>
+            <span style="font-family:monospace;color:var(--accent3);font-weight:700">1.00 (Cat ✓)</span>
+          </div>
+          <div style="height:8px;border-radius:4px;background:#e5e7eb;margin-bottom:6px">
+            <div id="out-bar" style="height:100%;border-radius:4px;background:var(--accent);transition:width 0.25s;width:50%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8rem;color:var(--muted)"><span>0</span><span>output →</span><span>1</span></div>
+        </div>
+        <div style="margin-top:10px;background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:6px">
+            <span style="color:var(--muted)">Error (how wrong we are)</span>
+            <span id="werr" style="font-family:monospace;font-weight:700;color:var(--accent2)">0.50</span>
+          </div>
+          <div id="err-msg" style="font-size:0.8rem;color:var(--muted)">Adjust the weights to reduce the error toward 0.</div>
+        </div>
+        <div style="margin-top:10px;font-size:0.78rem;color:var(--muted);line-height:1.5">
+          <strong style="color:var(--text)">How training works:</strong> Each step nudges w₁ and w₂ slightly in the direction that reduces the error — this is called <em>gradient descent</em>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- ══════════ 4. CNN ══════════ -->
+<section id="cnn">
+  <h2><span class="num">4</span> Convolutional Neural Networks (CNN)</h2>
+  <p>CNNs are built on top of classical image processing. Understanding filters first makes CNN intuitive.</p>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="margin-top:0">The Signal Processing Analogy</h3>
+    <p>Think of an image as a 2D signal. Like audio signals, you can decompose it into frequency components (via 2D Fourier transforms):</p>
+    <p>• <strong>Low frequencies</strong> = overall structure, shapes, large regions of similar color.<br>
+       • <strong>High frequencies</strong> = fine details, sharp edges, noise.</p>
+    <p>A <strong>filter (kernel)</strong> is a small matrix that slides across the image, computing a dot product at each position. This sliding-window operation is called <strong>convolution</strong> — that's where the "Conv" in CNN comes from.</p>
+  </div>
+
+  <!-- INTERACTIVE DEMO -->
+  <div class="cnn-demo">
+    <div style="margin-bottom:14px">
+      <strong style="color:var(--text)">Interactive Filter Demo</strong>
+      <span style="color:var(--muted); font-size:0.85rem; margin-left:8px">Apply a filter kernel to a sample image and see the result</span>
+    </div>
+    <div class="cnn-controls">
+      <label>Filter:</label>
+      <button class="filter-btn active" data-filter="original" onclick="setFilter('original', this)">Original</button>
+      <button class="filter-btn" data-filter="blur" onclick="setFilter('blur', this)">Low-Pass (Blur)</button>
+      <button class="filter-btn" data-filter="edge" onclick="setFilter('edge', this)">High-Pass (Edges)</button>
+      <button class="filter-btn" data-filter="sharpen" onclick="setFilter('sharpen', this)">Sharpen</button>
+      <button class="filter-btn" data-filter="emboss" onclick="setFilter('emboss', this)">Emboss</button>
+    </div>
+    <div class="canvas-row">
+      <div class="canvas-wrap">
+        <canvas id="orig-canvas" width="180" height="180"></canvas>
+        <span>Input Image</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+        <div style="color:var(--muted);font-size:0.8rem">3×3 Kernel</div>
+        <div class="kernel-grid" id="kernel-display"></div>
+        <div style="font-size:1.4rem;color:var(--accent)">⊛</div>
+        <div style="color:var(--muted);font-size:0.75rem">slides across<br>every pixel</div>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="out-canvas" width="180" height="180"></canvas>
+        <span>Filtered Output</span>
+      </div>
+    </div>
+    <div class="explain-box" id="filter-explain">
+      <strong>Original:</strong> No filter applied — this is the raw pixel values fed into the network.
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin-top:0">From Filters to CNN Layers</h3>
+    <p>In classical image processing, engineers <em>manually design</em> these filter kernels. In a CNN, the filter values are the <strong>weights</strong> — they are <em>automatically learned through training</em>, just like the perceptron weights above.</p>
+    <p>A CNN stacks multiple types of layers:</p>
+    <table>
+      <thead><tr><th>Layer Type</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Convolutional</strong></td><td>Applies learned filters → produces <em>feature maps</em> (e.g., one map per filter detecting edges, curves, etc.)</td></tr>
+        <tr><td><strong>Activation (ReLU)</strong></td><td>Applies non-linearity — sets negatives to 0, keeps positives</td></tr>
+        <tr><td><strong>Pooling (Sub-sampling)</strong></td><td>Shrinks the feature map (e.g., max pooling takes the largest value in each region) — reduces computation and overfitting</td></tr>
+        <tr><td><strong>Fully Connected</strong></td><td>Final layers that combine all learned features and output a class prediction with confidence scores</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════ 5. DATA POISONING ══════════ -->
+<section id="poison">
+  <h2><span class="num">5</span> Data Poisoning Attacks</h2>
+  <p>Our project explores how a trained image classifier can be fooled by imperceptibly small modifications to input images.</p>
+
+  <div class="two-col">
+    <div class="card">
+      <span class="tag pink">Open Question</span>
+      <h3>Can we minimize the noise?</h3>
+      <p>If we add noise to an image to trick the model, can we make that noise so small that a human can't even see it? Or does making it harder to detect also make it harder to fool the model?</p>
+    </div>
+    <div class="card">
+      <span class="tag pink">Open Question</span>
+      <h3>What if we can't see inside the model?</h3>
+      <p>If we don't have access to the model at all (a "black box") — how do we figure out what noise to add so that the model gives the wrong answer?</p>
+    </div>
+  </div>
+
+  <div class="cnn-demo" style="margin-top:4px">
+    <div style="margin-bottom:12px"><strong style="color:var(--text)">Noise Injection Demo</strong> <span style="color:var(--muted);font-size:0.85rem">— drag the slider to add noise</span></div>
+    <div class="poison-row">
+      <div class="poison-canvas-wrap">
+        <canvas id="clean-img" width="150" height="150"></canvas>
+        <span>Clean Image (Cat)</span>
+      </div>
+      <div style="text-align:center">
+        <div style="color:var(--muted);font-size:0.85rem;margin-bottom:8px">Noise scale: <span id="noise-val">0</span></div>
+        <input type="range" id="noise-slider" min="0" max="80" value="0" oninput="updatePoison(this.value)">
+        <div style="color:var(--muted);font-size:0.75rem;margin-top:6px">← imperceptible &nbsp;|&nbsp; visible →</div>
+      </div>
+      <div class="poison-canvas-wrap">
+        <canvas id="noisy-img" width="150" height="150"></canvas>
+        <span>Poisoned Image</span>
+      </div>
+      <div style="text-align:center;padding:16px 20px;background:var(--surface);border-radius:10px;border:1px solid var(--border)">
+        <div style="color:var(--muted);font-size:0.8rem;margin-bottom:6px">Model Prediction</div>
+        <div id="pred-label" style="color:var(--accent3)">🐱 Cat (97%)</div>
+        <div id="conf-bar" style="margin-top:8px;height:6px;border-radius:3px;background:#ddd;width:140px">
+          <div id="conf-fill" style="height:100%;border-radius:3px;background:var(--accent3);width:97%;transition:width 0.3s,background 0.3s"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="footer">CISE Workshop · ML &amp; CNN Basics for Data Poisoning Research</div>
+
+</div><!-- /page -->
+
+<script>
+// ══════════════════════════════════════════════
+//  Synthetic image generator (simple geometric shapes)
+// ══════════════════════════════════════════════
+function makeBaseImage(ctx, W, H) {
+  // sky gradient
+  let g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#b8d4f0'); g.addColorStop(1,'#e8f4e8');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  // "ground"
+  ctx.fillStyle='#8fbb70'; ctx.fillRect(0,H*0.7,W,H*0.3);
+  // cat body
+  ctx.fillStyle='#e8963c';
+  ctx.beginPath(); ctx.ellipse(W/2,H*0.6,W*0.22,H*0.2,0,0,Math.PI*2); ctx.fill();
+  // cat head
+  ctx.beginPath(); ctx.arc(W/2,H*0.38,W*0.16,0,Math.PI*2); ctx.fill();
+  // ears
+  ctx.fillStyle='#d07828';
+  ctx.beginPath(); ctx.moveTo(W*0.36,H*0.27); ctx.lineTo(W*0.3,H*0.15); ctx.lineTo(W*0.43,H*0.24); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(W*0.64,H*0.27); ctx.lineTo(W*0.7,H*0.15); ctx.lineTo(W*0.57,H*0.24); ctx.closePath(); ctx.fill();
+  // eyes
+  ctx.fillStyle='#1a1a2e';
+  ctx.beginPath(); ctx.arc(W*0.43,H*0.36,W*0.035,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W*0.57,H*0.36,W*0.035,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#ffd700';
+  ctx.beginPath(); ctx.arc(W*0.43,H*0.36,W*0.018,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W*0.57,H*0.36,W*0.018,0,Math.PI*2); ctx.fill();
+  // nose
+  ctx.fillStyle='#ff9999';
+  ctx.beginPath(); ctx.arc(W/2,H*0.415,W*0.02,0,Math.PI*2); ctx.fill();
+  // whiskers
+  ctx.strokeStyle='rgba(100,80,60,0.5)'; ctx.lineWidth=1;
+  [[0.3,0.42,0.47,0.41],[0.28,0.44,0.46,0.44],[0.7,0.42,0.53,0.41],[0.72,0.44,0.54,0.44]].forEach(([x1,y1,x2,y2])=>{
+    ctx.beginPath(); ctx.moveTo(W*x1,H*y1); ctx.lineTo(W*x2,H*y2); ctx.stroke();
+  });
+  // tail
+  ctx.strokeStyle='#e8963c'; ctx.lineWidth=8; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(W*0.72,H*0.75); ctx.quadraticCurveTo(W*0.9,H*0.65,W*0.85,H*0.45); ctx.stroke();
+}
+
+// ══════════════════════════════════════════════
+//  CNN Filter Demo
+// ══════════════════════════════════════════════
+const FILTERS = {
+  original: {
+    name:'Original',
+    kernel: [[0,0,0],[0,1,0],[0,0,0]],
+    explain: '<strong>Original:</strong> No filter applied — this is the raw pixel values fed into the network.'
+  },
+  blur: {
+    name:'Low-Pass (Blur / Box Filter)',
+    kernel: [[1,1,1],[1,1,1],[1,1,1]], // will normalize
+    explain: '<strong>Low-Pass (Blur):</strong> Averages each pixel with its 8 neighbors. High-frequency details (edges, noise) are smoothed out, leaving only low-frequency structure. In signal terms: attenuates high-frequency components. This is the foundation a CNN learns to build on.'
+  },
+  edge: {
+    name:'High-Pass (Edge Detection / Laplacian)',
+    kernel: [[-1,-1,-1],[-1,8,-1],[-1,-1,-1]],
+    explain: '<strong>High-Pass (Edge Detection):</strong> Subtracts the neighborhood average from each pixel. The result is high where pixel values change rapidly — i.e., <em>edges</em>. Low-frequency regions (flat areas) become near-zero. Early CNN layers often learn filters like this automatically.'
+  },
+  sharpen: {
+    name:'Sharpen',
+    kernel: [[0,-1,0],[-1,5,-1],[0,-1,0]],
+    explain: '<strong>Sharpen:</strong> Amplifies the center pixel relative to its neighbors — accentuates both structure and edges. Equivalent to adding a scaled edge-detected image back to the original.'
+  },
+  emboss: {
+    name:'Emboss',
+    kernel: [[-2,-1,0],[-1,1,1],[0,1,2]],
+    explain: '<strong>Emboss:</strong> Creates a 3D-relief effect by computing directional differences. Highlights gradients in one direction more than another. An example of a filter sensitive to texture orientation — similar to what CNN feature maps capture.'
+  }
+};
+
+let currentFilter = 'original';
+let origPixels = null;
+const W = 180, H = 180;
+
+function initOrigCanvas() {
+  const c = document.getElementById('orig-canvas');
+  const ctx = c.getContext('2d');
+  makeBaseImage(ctx, W, H);
+  origPixels = ctx.getImageData(0,0,W,H);
+}
+
+function renderKernel(k) {
+  const flat = k.flat();
+  const max = Math.max(...flat.map(Math.abs), 1);
+  const el = document.getElementById('kernel-display');
+  el.innerHTML = flat.map(v=>{
+    const cls = v > 0 ? 'pos' : v < 0 ? 'neg' : 'zero';
+    const display = Number.isInteger(v) ? v : v.toFixed(2);
+    return `<div class="kernel-cell ${cls}">${display}</div>`;
+  }).join('');
+}
+
+function applyConvolution(kernel) {
+  const src = origPixels;
+  const dst = new ImageData(W, H);
+  const d = src.data;
+  const out = dst.data;
+  // Normalize blur
+  let k = kernel;
+  const sum = k.flat().reduce((a,b)=>a+b,0);
+  const norm = sum > 1 ? sum : 1;
+
+  for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
+    let r=0,g=0,b=0;
+    for (let ky=0;ky<3;ky++) for (let kx=0;kx<3;kx++) {
+      const ny = Math.min(H-1,Math.max(0,y+ky-1));
+      const nx = Math.min(W-1,Math.max(0,x+kx-1));
+      const idx=(ny*W+nx)*4;
+      const kv = k[ky][kx]/norm;
+      r+=d[idx]*kv; g+=d[idx+1]*kv; b+=d[idx+2]*kv;
+    }
+    const i=(y*W+x)*4;
+    out[i]=Math.min(255,Math.max(0,r+128*(norm<=1?1:0)));
+    out[i+1]=Math.min(255,Math.max(0,g+128*(norm<=1?1:0)));
+    out[i+2]=Math.min(255,Math.max(0,b+128*(norm<=1?1:0)));
+    out[i+3]=255;
+  }
+  // For edge/emboss, don't add 128 offset; recalculate properly
+  if (norm === 1) {
+    for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
+      let r=0,g=0,b=0;
+      for (let ky=0;ky<3;ky++) for (let kx=0;kx<3;kx++) {
+        const ny=Math.min(H-1,Math.max(0,y+ky-1));
+        const nx=Math.min(W-1,Math.max(0,x+kx-1));
+        const idx=(ny*W+nx)*4;
+        r+=d[idx]*k[ky][kx]; g+=d[idx+1]*k[ky][kx]; b+=d[idx+2]*k[ky][kx];
+      }
+      const i=(y*W+x)*4;
+      out[i]=Math.min(255,Math.max(0,r)); out[i+1]=Math.min(255,Math.max(0,g));
+      out[i+2]=Math.min(255,Math.max(0,b)); out[i+3]=255;
+    }
+  }
+  return dst;
+}
+
+function setFilter(name, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = name;
+  const f = FILTERS[name];
+  renderKernel(f.kernel);
+  document.getElementById('filter-explain').innerHTML = f.explain;
+  const outCtx = document.getElementById('out-canvas').getContext('2d');
+  if (name === 'original') {
+    outCtx.putImageData(origPixels, 0, 0);
+  } else {
+    outCtx.putImageData(applyConvolution(f.kernel), 0, 0);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  Poison Demo
+// ══════════════════════════════════════════════
+let cleanPixels = null;
+function initPoisonCanvas() {
+  const c = document.getElementById('clean-img');
+  const ctx = c.getContext('2d');
+  makeBaseImage(ctx, 150, 150);
+  cleanPixels = ctx.getImageData(0,0,150,150);
+  // init noisy canvas
+  document.getElementById('noisy-img').getContext('2d').putImageData(cleanPixels,0,0);
+}
+
+const noiseMap = (() => {
+  // pre-generate structured noise for reproducibility
+  const arr = [];
+  // use a simple LCG-like deterministic pattern
+  let s = 42;
+  for(let i=0;i<150*150*3;i++){
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    arr.push(((s >> 16) & 0xff) - 128);
+  }
+  return arr;
+})();
+
+function updatePoison(val) {
+  val = parseInt(val);
+  document.getElementById('noise-val').textContent = val;
+  const nCtx = document.getElementById('noisy-img').getContext('2d');
+  const dst = new ImageData(150,150);
+  const src = cleanPixels.data;
+  const out = dst.data;
+  for(let i=0,j=0;i<src.length;i+=4,j+=3){
+    out[i]=Math.min(255,Math.max(0,src[i]+noiseMap[j]*val/128));
+    out[i+1]=Math.min(255,Math.max(0,src[i+1]+noiseMap[j+1]*val/128));
+    out[i+2]=Math.min(255,Math.max(0,src[i+2]+noiseMap[j+2]*val/128));
+    out[i+3]=255;
+  }
+  nCtx.putImageData(dst,0,0);
+
+  // simulate prediction flip
+  const predEl = document.getElementById('pred-label');
+  const fillEl = document.getElementById('conf-fill');
+  if(val < 15) {
+    predEl.textContent='🐱 Cat (97%)'; predEl.style.color='var(--accent3)';
+    fillEl.style.width='97%'; fillEl.style.background='var(--accent3)';
+  } else if(val < 35) {
+    const conf = Math.round(97 - val*1.5);
+    predEl.textContent=`🐱 Cat (${conf}%)`; predEl.style.color='#e8a030';
+    fillEl.style.width=conf+'%'; fillEl.style.background='#e8a030';
+  } else if(val < 55) {
+    predEl.textContent='❓ Uncertain (51%)'; predEl.style.color='#e8a030';
+    fillEl.style.width='51%'; fillEl.style.background='#e8a030';
+  } else {
+    const conf = Math.round(55 + (val-55)*1.1);
+    predEl.textContent=`🐶 Dog (${Math.min(conf,98)}%)`;  predEl.style.color='var(--accent2)';
+    fillEl.style.width=Math.min(conf,98)+'%'; fillEl.style.background='var(--accent2)';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  Weights / Training Demo
+// ══════════════════════════════════════════════
+const X1 = 0.8, X2 = 0.3, TARGET = 1.0;
+const LR = 0.8;
+let lossHistory = [];
+let autoTimer = null;
+
+function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
+
+function updateWeights() {
+  const w1 = parseFloat(document.getElementById('w1').value) || 0;
+  const w2 = parseFloat(document.getElementById('w2').value) || 0;
+  document.getElementById('w1-val').textContent = w1.toFixed(2);
+  document.getElementById('w2-val').textContent = w2.toFixed(2);
+
+  const wsum = w1 * X1 + w2 * X2;
+  const out = sigmoid(wsum);
+  const err = Math.abs(TARGET - out);
+
+  document.getElementById('wsum').textContent = wsum.toFixed(3);
+  document.getElementById('wout').textContent = out.toFixed(3);
+  document.getElementById('werr').textContent = err.toFixed(3);
+  document.getElementById('out-bar').style.width = (out * 100).toFixed(1) + '%';
+  document.getElementById('out-bar').style.background = out > 0.8 ? 'var(--accent3)' : out > 0.5 ? 'var(--accent)' : 'var(--accent2)';
+
+  const msg = err < 0.05 ? '🎉 Great! Error is very small — the weights have converged!' :
+              err < 0.2  ? 'Getting close! A few more steps should do it.' :
+                           'Adjust the weights (or press Train) to reduce the error toward 0.';
+  document.getElementById('err-msg').textContent = msg;
+
+  lossHistory.push(err);
+  if (lossHistory.length > 80) lossHistory.shift();
+  if (lossHistory.length % 3 === 0 || err < 0.05) drawLossChart();
+}
+
+function trainStep() {
+  const w1 = parseFloat(document.getElementById('w1').value) || 0;
+  const w2 = parseFloat(document.getElementById('w2').value) || 0;
+  const out = sigmoid(w1 * X1 + w2 * X2);
+  const delta = (TARGET - out) * out * (1 - out);
+  document.getElementById('w1').value = Math.max(-5, Math.min(5, w1 + LR * delta * X1));
+  document.getElementById('w2').value = Math.max(-5, Math.min(5, w2 + LR * delta * X2));
+  updateWeights();
+}
+
+function autoTrain() {
+  if (autoTimer) { clearInterval(autoTimer); autoTimer = null; document.getElementById('auto-btn').textContent = '⏩ Auto-train'; return; }
+  document.getElementById('auto-btn').textContent = '⏹ Stop';
+  // Read current weights into memory — do math in JS, update DOM once per tick
+  let w1 = parseFloat(document.getElementById('w1').value);
+  let w2 = parseFloat(document.getElementById('w2').value);
+  autoTimer = setInterval(() => {
+    for (let i = 0; i < 8; i++) {
+      const out = sigmoid(w1 * X1 + w2 * X2);
+      const delta = (TARGET - out) * out * (1 - out);
+      w1 = Math.max(-5, Math.min(5, w1 + LR * delta * X1));
+      w2 = Math.max(-5, Math.min(5, w2 + LR * delta * X2));
+    }
+    document.getElementById('w1').value = w1;
+    document.getElementById('w2').value = w2;
+    updateWeights();
+    const err = Math.abs(TARGET - sigmoid(w1 * X1 + w2 * X2));
+    if (err < 0.02) { clearInterval(autoTimer); autoTimer = null; document.getElementById('auto-btn').textContent = '⏩ Auto-train'; }
+  }, 150);
+}
+
+function resetWeights() {
+  if (autoTimer) { clearInterval(autoTimer); autoTimer = null; document.getElementById('auto-btn').textContent = '⏩ Auto-train'; }
+  document.getElementById('w1').value = 0.2;
+  document.getElementById('w2').value = 0.1;
+  lossHistory = [];
+  updateWeights();
+}
+
+function drawLossChart() {
+  const canvas = document.getElementById('loss-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // background
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#eef1f8';
+  ctx.fillRect(0, 0, W, H);
+
+  if (lossHistory.length < 2) return;
+  const maxL = 1;
+  ctx.strokeStyle = '#3a5bd9';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  lossHistory.forEach((v, i) => {
+    const x = (i / (lossHistory.length - 1)) * W;
+    const y = H - (v / maxL) * (H - 10) - 4;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // fill under
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  ctx.fillStyle = 'rgba(58,91,217,0.08)'; ctx.fill();
+
+  // zero line label
+  ctx.fillStyle = '#94a3b8'; ctx.font = '10px sans-serif';
+  ctx.fillText('error = 0', 4, H - 4);
+}
+
+// ══════════════════════════════════════════════
+//  Init
+// ══════════════════════════════════════════════
+window.onload = function() {
+  initOrigCanvas();
+  setFilter('original', document.querySelector('[data-filter="original"]'));
+  initPoisonCanvas();
+  updateWeights();
+};
+</script>
+</body>
+</html>
